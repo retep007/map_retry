@@ -24,7 +24,7 @@ fn should_retry_on_error() {
     let mut even = true;
 
     let even_fail = |a| {
-            even = !even;
+        even = !even;
         if even {
             return Err(());
         }
@@ -51,6 +51,10 @@ fn should_retry_on_error() {
 #[test]
 fn should_work_with_iterators() {
     let a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    let res: Vec<_> = a.iter().map_retry(|a| even_fail(a).ok_or(())).filter(Result::is_ok).collect();
+    let res: Vec<_> = a
+        .iter()
+        .map_retry(|a| even_fail(a).ok_or(()))
+        .filter(Result::is_ok)
+        .collect();
     assert!(a.len() > res.len());
 }
