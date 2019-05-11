@@ -1,0 +1,17 @@
+[package]
+name = "map_retry"
+version = "0.1.0"
+authors = ["retep007 <peter.hrvola@hotmail.com>"]
+edition = "2018"
+keywords = ["iterator", "retry", "fail", "zero_dependency"]
+categories = ["rust-patterns"]
+description = "Zero dependency trait that provides retry function that works with iterators"
+license = "MIT"
+readme = "README.md"
+
+[badges]
+maintenance = { status = "passively-maintained" }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
