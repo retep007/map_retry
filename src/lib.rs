@@ -1,5 +1,12 @@
 //! Map retry crate provides a trait that allows to repeat mapping on failed results.
-//! This is useful for doing IO such as loading webpages using iterators.
+//! This is useful for doing I/O such as loading webpages using iterators.
+//! 
+//! `map_retry` behaves like normal map function, with exception that return type
+//! must be `Result` and if `Err` is returned it tries to execute mapping function
+//! one more time after all original items have been processed. **Order** of results is
+//! not guaranteed. If mapping fails also on second try the last error is returned.
+//! The same number of input and output items is guaranteed.
+//! 
 //! ```
 //! use map_retry::MapRetry;
 //! # static mut EVEN: bool = true;
@@ -69,12 +76,7 @@ where
     type Item = Result<Out, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut res;
-        while {
-            res = self.iter.next();
-            res.is_some()
-        } {
-            let res = res?;
+        for res in self.iter.by_ref() {
             let m = (self.f)(res.clone());
             if m.is_ok() {
                 return Some(m);
