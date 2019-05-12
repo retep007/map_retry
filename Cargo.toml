@@ -8,7 +8,7 @@ categories = ["rust-patterns"]
 description = "Zero dependency trait that provides retry function that works with iterators"
 license = "MIT"
 readme = "README.md"
-
+repository = "https://github.com/retep007/map_retry"
 [badges]
 maintenance = { status = "passively-maintained" }
 
