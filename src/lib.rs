@@ -28,23 +28,11 @@
 //! }
 //! ```
 
-/// Return type used for chaining with iterators
-#[derive(Debug, Clone)]
-pub struct MapIter<Iter: Iterator, F> {
-    iter: Iter,
-    failed: Vec<Iter::Item>,
-    f: F,
-}
+pub mod options;
+pub mod delayed;
 
-impl<Iter: Iterator, F> MapIter<Iter, F> {
-    fn new(iter: Iter, f: F) -> Self {
-        MapIter {
-            iter,
-            failed: vec![],
-            f,
-        }
-    }
-}
+use options::Options;
+use delayed::DelayedRetryIter;
 
 /// Trait defining retry signatures
 pub trait MapRetry: Iterator + Sized {
@@ -54,8 +42,9 @@ pub trait MapRetry: Iterator + Sized {
     ///
     /// **Order** of elements is not guaranteed.
     /// All elements in original iterator are returned.
-    fn map_retry<F>(self, f: F) -> MapIter<Self, F>;
-    // fn map_retry<F>(self, f: F) -> MapIter<Self, F> where MapIter<Self, F>: Iterator;
+    fn map_retry<F>(self, f: F) -> DelayedRetryIter<Self, F>;
+
+    fn map_retry_options<F>(self, options: Options, f: F) -> DelayedRetryIter<Self, F>;
 }
 
 impl<T: Iterator> MapRetry for T {
@@ -64,26 +53,21 @@ impl<T: Iterator> MapRetry for T {
     /// Errors are retried only after all elements have been mapped.
     /// Maping function must return `Result` type.
     /// Items are cloned when error is returned.
-    fn map_retry<F>(self, f: F) -> MapIter<Self, F> {
-        MapIter::new(self, f)
-    }
-}
-
-impl<Iter: Iterator, F: FnMut(Iter::Item) -> Result<Out, E>, Out, E> Iterator for MapIter<Iter, F>
-where
-    Iter::Item: Clone,
-{
-    type Item = Result<Out, E>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        for res in self.iter.by_ref() {
-            let m = (self.f)(res.clone());
-            if m.is_ok() {
-                return Some(m);
-            } else {
-                self.failed.push(res);
-            }
+    fn map_retry<F>(self, f: F) -> DelayedRetryIter<Self, F>  {
+        DelayedRetryIter {
+            iter: self,
+            options: Default::default(),
+            failed: Default::default(),
+            f,
         }
-        Some((self.f)(self.failed.pop()?))
+    }
+
+    fn map_retry_options<F>(self, options: Options, f: F) -> DelayedRetryIter<Self, F> {
+        DelayedRetryIter {
+            iter: self,
+            options,
+            failed: Default::default(),
+            f,
+        }
     }
 }
